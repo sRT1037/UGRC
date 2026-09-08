@@ -1,3 +1,6 @@
 [submodule "resources/SiMWiSense"]
 	path = resources/SiMWiSense
 	url = https://github.com/kfoysalhaque/SiMWiSense.git
+[submodule "resources/Wilight-Code-CSI-Doppler"]
+	path = resources/Wilight-Code-CSI-Doppler
+	url = https://github.com/kaveenrajG29/Wilight-Code-CSI-Doppler.git
