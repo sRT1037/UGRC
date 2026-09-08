@@ -1,0 +1,3 @@
+[submodule "resources/SiMWiSense"]
+	path = resources/SiMWiSense
+	url = https://github.com/kfoysalhaque/SiMWiSense.git

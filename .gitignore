@@ -1,0 +1,20 @@
+# Local Python environment
+.venv/
+__pycache__/
+*.pyc
+
+# Copyrighted reference papers — not committed; path kept in .env
+papers/
+
+# Local environment config (paths, not secrets, but kept out of the repo)
+.env
+
+# OS/editor cruft
+.DS_Store
+*.swp
+
+# Local-only Claude Code settings (per-machine permissions, not shared)
+.claude/settings.local.json
+
+# Local-only Obsidian UI state (open tabs/pane layout, not meaningful to share)
+sensing-vault/.obsidian/workspace.json
