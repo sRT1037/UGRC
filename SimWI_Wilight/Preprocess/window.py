@@ -100,7 +100,8 @@ def iter_windows(slot):
         yield i - D, slot[(i - 1) * W: i * W]
 
 
-def write_batches(stream, station, env, activity, dry_run=False):
+def write_batches(stream, station, env, activity, dry_run=False, out_root=None,
+                  compress=True):
     """
     Slice one sanitized activity stream into every slot, window it, and write
     the .mat files. Returns {slot_name: n_windows_written}.
@@ -110,13 +111,14 @@ def write_batches(stream, station, env, activity, dry_run=False):
         <BATCHES>/<Env>/<BW>/<num_mon>/<station>/Slots/<slot>/<letter>_batch/
     """
     counts = {}
+    out_root = out_root or C.BATCHES
     n_packets = len(stream)
 
     for name, start, stop in slots_for(station):
         lo, hi = slot_bounds(n_packets, start, stop)
         slot = stream[lo:hi]
 
-        out_dir = (C.BATCHES / env / C.BW / C.NUM_MON / station
+        out_dir = (out_root / env / C.BW / C.NUM_MON / station
                    / "Slots" / name / f"{activity}_batch")
         if not dry_run:
             out_dir.mkdir(parents=True, exist_ok=True)
@@ -126,8 +128,16 @@ def write_batches(stream, station, env, activity, dry_run=False):
             if not dry_run:
                 # v7 (not v7.3) — dataGenerator.read_mat uses scipy.io.loadmat,
                 # which cannot read v7.3. Variable must be named 'csi_mon'.
+                #
+                # compress=False for the baseline arm. Raw CSI is integral and
+                # gzips ~2x, so zlib does real work on it (measured: 175s vs
+                # 17s per activity against the sanitized arm's incompressible
+                # float mantissas) — and that cost is paid again on every read
+                # during training, ~694k reads per cell. Disk is the cheap
+                # resource here. Stored VALUES are identical either way, so
+                # this is a storage choice, not a scientific one.
                 spio.savemat(out_dir / f"batch_{idx}.mat",
-                             {"csi_mon": win}, do_compression=True)
+                             {"csi_mon": win}, do_compression=compress)
             n += 1
 
         counts[name] = n

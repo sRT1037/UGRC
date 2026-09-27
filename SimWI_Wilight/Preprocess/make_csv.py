@@ -81,7 +81,30 @@ def main():
                     print(f"   {slot:<9} test  {te:>7,}                      "
                           f"{time.time()-t1:.1f}s")
 
+    bad = validate(root)
+    if bad:
+        raise SystemExit(
+            f"\n!! {len(bad)} manifest rows do not name a batch_*.mat file.\n"
+            f"   e.g. {bad[:3]}\n"
+            f"   create_csv.generate_* index EVERY file under a *_batch dir, so a\n"
+            f"   stray .DS_Store becomes a row and read_mat dies mid-epoch with\n"
+            f"   KeyError: '.'  Delete the strays and re-run.")
+
     print(f"\ndone in {(time.time() - t0) / 60:.1f} min")
+
+
+def validate(root):
+    """Every manifest row must name a batch_*.mat file."""
+    bad = []
+    for csv_path in root.rglob("*_set.csv"):
+        with open(csv_path) as fh:
+            next(fh, None)
+            for line in fh:
+                name = line.split(",")[0]
+                if not name.split("/")[-1].startswith("batch_") or \
+                        not name.endswith(".mat"):
+                    bad.append(f"{csv_path.name}:{name}")
+    return bad
 
 
 if __name__ == "__main__":

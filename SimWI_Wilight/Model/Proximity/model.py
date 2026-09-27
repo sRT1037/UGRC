@@ -14,12 +14,17 @@ while the preprocessing varies. Including its quirks:
 The head is Flatten -> Dense, so parameter count scales with n_sub:
 
     n_sub   flatten   dense params   total
-      242    92,928      1,858,580   ~1.97 M
-       58    22,272        445,460   ~558 k
+      234    89,856      1,797,140   ~1.91 M      <- baseline tree width
+       58    22,272        445,460   ~558 k       <- sanitized tree width
 
-That 3.5x gap is why the baseline should also be run at n_sub=58: otherwise a
-242-vs-58 comparison confounds "did the ratio destroy information" with "did
-the model get smaller".
+The 3.4x gap between the two arms is a KNOWN, accepted confound.
+
+Do NOT try to remove it by passing n_sub=58 against the baseline tree. Both
+trees are FREQUENCY-ORDERED, so [:, 0:58] is subcarriers -122..-65 — one edge
+of the band — whereas the sanitized 58 are double-ratio groups spanning all of
+it. That is a bandwidth ablation, not a capacity control, and it fails
+silently. read_mat now refuses it. A real capacity control needs strided
+columns, or a GlobalAveragePooling2D head instead of Flatten.
 """
 
 from tensorflow import keras

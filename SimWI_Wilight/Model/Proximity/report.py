@@ -157,9 +157,11 @@ def main():
     p.add_argument("--subcarriers", type=int, required=True)
     p.add_argument("--norm", choices=["none","center","standardize"], default="none")
     p.add_argument("--env", default="Classroom")
+    p.add_argument("--seed", type=int, default=0)
     args = p.parse_args()
 
-    suffix = f"{args.arm}_{args.subcarriers}sc_{args.norm}"
+    suffix = (f"{args.arm}_{args.subcarriers}sc_{args.norm}"
+              + (f"_s{args.seed}" if args.seed else ""))
     outdir = RESULTS / "Proximity" / suffix / args.env
     outdir.mkdir(parents=True, exist_ok=True)
 

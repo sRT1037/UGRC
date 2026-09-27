@@ -31,20 +31,22 @@ STATIONS = ["m1", "m2", "m3"]
 def main():
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--arm", default="sanitized")
+    p.add_argument("--arm", choices=["sanitized", "baseline"], default="sanitized")
     p.add_argument("--root", default=None)
     p.add_argument("--env", default="Classroom")
     p.add_argument("--subcarriers", type=int, required=True)
     p.add_argument("--norm", choices=["none","center","standardize"], default="none")
     p.add_argument("--cells", choices=["all", "diagonal"], default="all")
     p.add_argument("--epochs", type=int, default=15)
+    p.add_argument("--seed", type=int, default=0)
     p.add_argument("--force", action="store_true")
     args = p.parse_args()
 
     cells = ([(s, s) for s in STATIONS] if args.cells == "diagonal"
              else [(s, j) for s in STATIONS for j in STATIONS])
 
-    suffix = f"{args.arm}_{args.subcarriers}sc_{args.norm}"
+    suffix = (f"{args.arm}_{args.subcarriers}sc_{args.norm}"
+              + (f"_s{args.seed}" if args.seed else ""))
     print(f"grid: {suffix} | {len(cells)} cells | env {args.env}")
 
     t0 = time.time()
@@ -58,7 +60,7 @@ def main():
                "--arm", args.arm, "--env", args.env,
                "--station", station, "--subject", subject,
                "--subcarriers", str(args.subcarriers),
-               "--epochs", str(args.epochs)]
+               "--epochs", str(args.epochs), "--seed", str(args.seed)]
         cmd += ["--norm", args.norm]
         if args.root:
             cmd += ["--root", args.root]
@@ -75,6 +77,8 @@ def main():
     rep = [sys.executable, str(HERE / "report.py"),
            "--arm", args.arm, "--subcarriers", str(args.subcarriers),
            "--env", args.env]
+    if args.seed:
+        rep += ["--seed", str(args.seed)]
     rep += ["--norm", args.norm]
     subprocess.run(rep)
 

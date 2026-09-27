@@ -62,8 +62,15 @@ def main():
     p.add_argument("--batch-size", type=int, default=64)  # upstream default
     p.add_argument("--lr", type=float, default=0.01)      # upstream default
     p.add_argument("--workers", type=int, default=8)
+    p.add_argument("--seed", type=int, default=0,
+                   help="seeds weight init, batch order and the epoch shuffle. "
+                        "The headline is a difference of two small means (n=3 and "
+                        "n=6), so repeat-seed runs are what give it an error bar.")
     p.add_argument("--tag", default=None)
     args = p.parse_args()
+
+    # Seed BEFORE anything builds a layer or shuffles an index.
+    keras.utils.set_random_seed(args.seed)
 
     root = Path(args.root) if args.root else ARMS[args.arm]
     train_dir, test_dir = build_paths(root, args.env, args.station, args.subject)
@@ -72,7 +79,8 @@ def main():
             raise SystemExit(f"missing {d}")
 
     tag = args.tag or (f"{args.arm}_{args.subcarriers}sc_{args.norm}"
-                       f"_{args.env}_{args.station}_{args.subject}")
+                       f"_{args.env}_{args.station}_{args.subject}"
+                       + (f"_s{args.seed}" if args.seed else ""))
     (RESULTS / "runs").mkdir(parents=True, exist_ok=True)
     (RESULTS / "models").mkdir(parents=True, exist_ok=True)
     ckpt = RESULTS / "models" / f"{tag}.keras"
@@ -129,7 +137,7 @@ def main():
         "diagonal": args.station == args.subject,
         "subcarriers": args.subcarriers, "norm": args.norm,
         "epochs_requested": args.epochs, "epochs_run": len(hist.history["loss"]),
-        "batch_size": args.batch_size, "lr": args.lr,
+        "batch_size": args.batch_size, "lr": args.lr, "seed": args.seed,
         "params": int(m.count_params()),
         "n_train": len(train_gen) * args.batch_size,
         "n_test": len(y_pred),

@@ -39,6 +39,25 @@ INTERIM = DATA_OUT / "interim"
 #   <BATCHES>/<Env>/<BW>/<num_mon>/<station>/Slots/<slot>/<letter>_batch/batch_N.mat
 BATCHES = DATA_OUT / "batches"
 
+# ── Baseline arm ──────────────────────────────────────────────────────────────
+# The SAME 234 frequency-ordered subcarriers the ratio stages consume, windowed
+# WITHOUT any ratio. This is the control: identical slot bounds, identical
+# windows, identical split seed, identical CNN code — the only difference is
+# whether the ratio was applied.
+#
+# The guard drop and the frequency reorder are kept here on purpose. Those 8
+# columns are dead (mean |CSI| 3.9 vs 562), so including them would handicap
+# the baseline; both arms must see the same subcarriers.
+BASELINE_BATCHES = REPO_ROOT / "data" / "SimWi_raw" / "batches"
+
+# complex64 for the baseline is LOSSLESS, verified: raw CSI values are integers
+# in +-2047 (12-bit from the chip) and float32 is exact for integers up to
+# 16,777,216; a float64->float32->float64 round-trip over 4.8M values was
+# bit-identical. It also changes nothing downstream, since data_gen casts every
+# window to float32 anyway. Note this saves RAM, not much disk: savemat gzips integral values
+# well (~2x), so the tree lands near 34 GB either way.
+BASELINE_DTYPE = "complex64"
+
 # ── Dataset shape ─────────────────────────────────────────────────────────────
 ENVS        = ["Classroom"]              # only Classroom was downloaded
 BW          = "80MHz"

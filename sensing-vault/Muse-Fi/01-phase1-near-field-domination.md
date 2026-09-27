@@ -75,7 +75,7 @@ The derivation assumes $v_S \approx v_I$ (similar motion intensity) — not real
 
 ## Notable — connection already in the vault
 
-[[../../basics/fresnel-zone-model]] §6: same "proximity amplifies sensitivity to small motion" intuition, different formalization (ellipsoid zone geometry vs. this channel-variation-power argument). The paper itself never mentions Fresnel zones — this is a vault-level synthesis, not a paper claim.
+[[../../basics/fresnel-zone-model]] §6: same "proximity amplifies sensitivity to small motion" intuition, different formalization (ellipsoid zone geometry vs. this channel-variation-power argument). The paper does **not** use Fresnel zones anywhere in its own derivation — the one place the term appears is Related Work (§6), where it cites Yang et al. [65] for using the Fresnel zone model to reduce interference in multi-person respiration sensing, "but with the requirement of accurate subject location and fixed transceiver placement." So the *comparison* drawn here (ellipsoid zones vs. VIR) is a vault-level synthesis, not a paper claim — but the paper does position itself against the Fresnel approach on exactly that point: near-field domination needs no accurate subject localization. (Correction: an earlier version of this note said the paper never mentions Fresnel zones at all — that was wrong.)
 
 ## Summary (3-liner)
 

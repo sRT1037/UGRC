@@ -44,7 +44,20 @@ def read_mat(dirpath, filename, n_sub, norm="none"):
     subcarriers, which is how we hold model capacity fixed across arms.
     """
     data = spio.loadmat(os.path.join(dirpath, filename))
-    csi = data["csi_mon"][:, 0:n_sub]
+    csi = data["csi_mon"]
+
+    # Guard against a silent band-slice. The trees are FREQUENCY-ORDERED, so
+    # [:, 0:58] on a 234-column tree is subcarriers -122..-65 — a contiguous
+    # 18 MHz slice of a 73 MHz band, NOT a capacity-matched comparison against
+    # the sanitized arm (whose 58 double-ratio groups span the whole band).
+    # That would fail silently, so refuse it. To subsample for a genuine
+    # capacity control, stride the columns instead of truncating.
+    if csi.shape[1] != n_sub:
+        raise ValueError(
+            f"{filename}: window has {csi.shape[1]} subcarriers but n_sub={n_sub}. "
+            f"Truncating a frequency-ordered tree slices one edge of the band; "
+            f"pass the tree's true width (58 sanitized / 234 baseline).")
+    csi = csi[:, 0:n_sub]
 
     # CHANGED (1): input normalisation. `norm` is one of
     #

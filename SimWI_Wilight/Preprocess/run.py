@@ -31,25 +31,45 @@ import sanitize
 import window
 
 
-def batches_exist(env, station, activity):
-    """True if every slot for this activity already has batch files on disk."""
-    for name, _, _ in window.slots_for(station):
-        d = (C.BATCHES / env / C.BW / C.NUM_MON / station
+def expected_counts(src, station):
+    """Windows each slot SHOULD contain, from the packet count in the header."""
+    with h5py.File(src, "r") as f:
+        n_packets = f["csi"].shape[1]
+    out = {}
+    for name, start, stop in window.slots_for(station):
+        lo, hi = window.slot_bounds(n_packets, start, stop)
+        out[name] = max(0, (hi - lo) // C.WINDOW_SIZE - 2 * C.DISCARD + 1)
+    return n_packets, out
+
+
+def batches_complete(env, station, activity, src, out_root):
+    """
+    True only if EVERY slot has EXACTLY the expected number of files.
+
+    Not "the directory exists and has something in it": slots are written in
+    order (Train_m1 ... Test_m3), so a job killed while writing the last slot
+    would leave all six directories non-empty and that activity would be
+    skipped forever on resume — silently producing a short, class-skewed
+    test set for one cell and desynchronising the split RNG for every slot
+    after it. Counting also catches stale files left by a --force re-run.
+    """
+    _, expected = expected_counts(src, station)
+    for name, want in expected.items():
+        d = (out_root / env / C.BW / C.NUM_MON / station
              / "Slots" / name / f"{activity}_batch")
-        if not d.is_dir() or not any(d.glob("batch_*.mat")):
+        if not d.is_dir():
+            return False
+        if sum(1 for _ in d.glob("batch_*.mat")) != want:
             return False
     return True
 
 
 def print_plan(src, station):
     """Dry-run: show the slot layout using the packet count from the header."""
-    with h5py.File(src, "r") as f:
-        n_packets = f["csi"].shape[1]
+    n_packets, expected = expected_counts(src, station)
     print(f"      {n_packets:,} packets")
-    for name, start, stop in window.slots_for(station):
-        lo, hi = window.slot_bounds(n_packets, start, stop)
-        n_win = max(0, (hi - lo) // C.WINDOW_SIZE - 2 * C.DISCARD + 1)
-        print(f"      [dry-run] {name:<9} packets {lo:>9,}..{hi:<9,} -> {n_win:>6,} windows")
+    for name, n_win in expected.items():
+        print(f"      [dry-run] {name:<9} -> {n_win:>6,} windows")
 
 
 def process_one(env, station, activity, keep_cols, reorder, args):
@@ -60,13 +80,13 @@ def process_one(env, station, activity, keep_cols, reorder, args):
         print(f"   {tag}: !! missing {src}")
         return
 
-    if batches_exist(env, station, activity) and not args.force:
-        print(f"   {tag}: batches present, skipping")
-        return
-
     if args.dry_run:
         print(f"   {tag}: would process {src.name}")
         print_plan(src, station)
+        return
+
+    if batches_complete(env, station, activity, src, C.BATCHES) and not args.force:
+        print(f"   {tag}: complete, skipping")
         return
 
     t0 = time.time()
