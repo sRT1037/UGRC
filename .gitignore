@@ -18,3 +18,10 @@ papers/
 
 # Local-only Obsidian UI state (open tabs/pane layout, not meaningful to share)
 sensing-vault/.obsidian/workspace.json
+
+# Raw/derived CSI datasets — large binaries, kept local only
+data/
+
+# Experiment outputs — logs, trained models, per-run JSON, plots.
+# Regenerable from the code; models are large and results are machine-specific.
+SimWI_Wilight/Results/

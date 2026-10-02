@@ -164,6 +164,20 @@ You already know the top of this stack (Application down to MAC/IP). Here's what
 
 So your instinct was right in spirit: each subcarrier effectively "has its own sine wave that superimposes independently at the Rx" — that's *true*, but only *because* linearity lets you decompose the one real, physical composite waveform into independent per-frequency stories. Physically only one waveform ever travels through the air; per-subcarrier superposition is the mathematically valid lens (via Fourier/linearity) for understanding what happens to that one waveform.
 
+### 8.1 The gap this glosses over — how do you get $H(f_j)$ if the data symbol is unknown?
+
+Step 7 says "each FFT bin's value is $H(f_j)$" — but that's only true if you already know what was transmitted on that subcarrier, so you can compare received vs. sent. For the actual **data** symbols, you don't know that in advance — decoding them is the whole point. So channel estimation can't come from the data portion of the packet at all.
+
+The fix: every 802.11 frame's PHY preamble includes a **Long Training Field (LTF / "long training sequence")** — a block of fixed, standard-defined symbols that **both Tx and Rx already know in advance**, sent *before* the actual data. Because the receiver knows exactly what these training symbols should look like, it can compare that known reference against what it actually received on each subcarrier:
+$$\hat H(f_j) \approx \frac{Y(f_j)}{X(f_j)}$$
+where $X(f_j)$ is the known training symbol and $Y(f_j)$ is what arrived. This — not the data symbols — is where the actual channel estimate $\hat H$ comes from. The receiver then reuses that same $\hat H$ to equalize (undo the channel's distortion on) the *rest* of the packet's data subcarriers, which is what makes decoding the unknown data symbols possible in the first place. The LTF is also reused for fine frequency-offset and symbol-timing correction, since those distortions show up in the same known-vs-received comparison.
+
+**Bonus**: this is *why* CSI is available "for free" on ordinary Wi-Fi traffic — every single frame's preamble already carries this training field for the receiver's own demodulation needs, whether or not anyone downstream cares about sensing.
+
+**Two things worth being precise about:**
+- This is **not a one-time handshake at connection setup** — the LTF rides in *every single PHY frame's* preamble, for as long as the link exists, because the channel keeps changing packet to packet and a stale estimate would be useless.
+- The LTF's bit pattern is a **fixed, standard-defined constant** (same sequence for every compliant device, every packet, no negotiation) — so the receiver isn't "demodulating" it in the normal sense (recovering unknown content); it already knows the clean reference and just compares it to what arrived.
+
 ```mermaid
 graph LR
     classDef tx fill:#2b6cb0,color:#fff,stroke:#1a4971,stroke-width:1px

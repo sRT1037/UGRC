@@ -63,8 +63,13 @@ The same "small motion near a zone" logic extends to **fine gesture/finger track
 - **Best suited to a single dominant reflector near a known position** — like ray-tracing, it assumes the region of interest isn't swamped by many overlapping uncontrolled reflectors; a rich-scattering room can blur the clean zone-crossing signature the same way it blurs ray-tracing's discrete spikes.
 - Like the other two models, it's a *modeling choice* about which physical structure to exploit — not a universally superior method. Pick ray-tracing for sparse-path localization, scattering for cluttered-environment aggregate motion, and Fresnel zones for small, near-field, quasi-periodic motion where sub-wavelength sensitivity matters most.
 
+## 6. Cousin idea in MUSE-Fi — same intuition, different formalization
+
+[[MUSE-Fi]]'s **near-field domination effect** is the same core intuition as the Fresnel zone model — a small motion very close to a device dominates the signal — but formalized differently. Instead of ellipsoid zones and half-wavelength path-length boundaries, MUSE-Fi works directly with **channel-variation power**: it shows the near-field subject's $\partial|h|/\partial t$ overwhelms a distant interferer's, and derives a closed-form **variation-to-interference ratio (VIR)** and Cassini-oval feasible regions from that, rather than a zone-center/zone-boundary geometric picture. Both models ultimately rest on the same [[EMfund]] fact — phase accumulates with distance/λ, and proximity to Tx or Rx amplifies sensitivity to small motion — just packaged for different purposes (Fresnel zones for *where within a room* a signal is strongest; VIR for *how many people* can be separated at once).
+
 ## See also
 - [[EMfund]]
 - [[ray-tracing-model]]
 - [[scattering-model]]
 - [[CSI-feature-extraction]]
+- [[MUSE-Fi]]
